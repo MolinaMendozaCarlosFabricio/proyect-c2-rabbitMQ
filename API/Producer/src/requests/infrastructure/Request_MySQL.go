@@ -21,7 +21,7 @@ func NewRequestRepoMySQL()*RequestRepoMySQL{
 	return &RequestRepoMySQL{Connection: *conn}
 }
 
-func(r *RequestRepoMySQL)CreateRequestMethod(request domain.Request)error{
+func(r *RequestRepoMySQL)CreateRequestMethod(request domain.Request)(int, error){
 	query := "INSERT INTO requests (date_request, id_user, id_status) VALUES (?, ?, ?)"
 	result, err := r.Connection.ExecPreparedQuerys(query, request.Date_request, request.Id_user, request.Id_status)
 	if err != nil {
@@ -34,7 +34,7 @@ func(r *RequestRepoMySQL)CreateRequestMethod(request domain.Request)error{
 	request.ID = int(id)
 	//time.Sleep(2*time.Minute)
 	//adapters.SendRequestMethod(request)
-    return err
+    return request.ID,err
 }
 
 func(r *RequestRepoMySQL)AddProductToRequestMethod(id_request int, id_product int, quiantity int)error{

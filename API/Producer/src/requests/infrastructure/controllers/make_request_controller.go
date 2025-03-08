@@ -27,14 +27,18 @@ func(controller *MakeRequestController)Execute(c *gin.Context){
 		return
 	}
 
-	if err := controller.Service.Execute(input.Id_user); err != nil {
+	id, err := controller.Service.Execute(input.Id_user);
+	if  err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Error": "Error al realizar pedido",
 		})
 		return
 	}
+	var ids []int
+	ids = append(ids, id)
 
 	c.JSON(http.StatusOK, gin.H{
 		"Message": "Pedido realizado",
+		"Results": ids,
 	})
 }
