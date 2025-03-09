@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -67,6 +69,21 @@ func main(){
 	)
 	failOnError(err, "Failed to register a consumer")
 
+	err = ch.ExchangeDeclare(
+		"inventory_analiser",   // name
+		"fanout", // type
+		true,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
+	)
+	failOnError(err, "Failed to declare an exchange")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+    defer cancel()
+
+
 	var forever chan struct{}
 
         go func() {
@@ -112,6 +129,22 @@ func main(){
 
 					log.Printf("Respuesta recibida: %+v", response)
                     d.Ack(false)
+
+					jsonBody, err := json.Marshal("Análisis completo")
+					failOnError(err, "Error al serializar JSON")
+
+					err = ch.PublishWithContext(ctx,
+						"inventory_distributor",           // exchange
+						"",       // routing key
+						false,        // mandatory
+						false,
+						amqp.Publishing{
+								DeliveryMode: amqp.Persistent,
+								ContentType:  "text/plain",
+								Body:         jsonBody,
+						})
+					failOnError(err, "Failed to publish a message")
+					log.Printf(" [x] Sent %s", jsonBody)
                 }
         }()
 
