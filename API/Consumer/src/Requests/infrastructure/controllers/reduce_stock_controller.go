@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -28,6 +29,8 @@ func(controller *ReduceStockOfAProductController)Execute(c *gin.Context){
 		})
 		return
 	}
+
+	fmt.Println("Entrada: ", input)
 
 	if err := controller.service.Execute(input.Id_request, input.Id_product, input.Quantity); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

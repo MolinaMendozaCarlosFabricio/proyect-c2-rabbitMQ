@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"fmt"
 	"log"
 	//"time"
 
@@ -32,6 +33,7 @@ func(r *RequestRepoMySQL)CreateRequestMethod(request domain.Request)(int, error)
 		log.Fatalf("Error al obtener último id del pedido:", err)
 	}
 	request.ID = int(id)
+	fmt.Println("ID del pedido: ", request.ID)
 	//time.Sleep(2*time.Minute)
 	//adapters.SendRequestMethod(request)
     return request.ID,err

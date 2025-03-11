@@ -14,7 +14,7 @@ import (
 
 type Acquires struct{
 	Id_request int
-	Id_prodcut int
+	Id_product int
 	Quantity int
 }
 
@@ -88,6 +88,7 @@ func main(){
 
         go func() {
                 for d := range msgs {
+					log.Printf("Mensaje recibido: %s", d.Body)
 					var acq Acquires
 					if err := json.Unmarshal(d.Body, &acq); err != nil {
 						log.Printf("Error al deserializar el mensaje: %v", err)
@@ -98,9 +99,9 @@ func main(){
 					log.Printf("Pedido recibido: %+v", acq)
 
 					data := []byte(`{
-						"id_request": ` + strconv.Itoa(acq.Id_request) + "," + `
-						"id_product": ` + strconv.Itoa(acq.Id_prodcut) + "," + `
-						"quantity": ` + strconv.Itoa(acq.Quantity) + 
+						"Id_request": ` + strconv.Itoa(acq.Id_request) + "," + `
+						"Id_product": ` + strconv.Itoa(acq.Id_product) + "," + `
+						"Quantity": ` + strconv.Itoa(acq.Quantity) + 
 					`}`,)
 
 					request, err := http.NewRequest(
@@ -134,7 +135,7 @@ func main(){
 					failOnError(err, "Error al serializar JSON")
 
 					err = ch.PublishWithContext(ctx,
-						"inventory_distributor",           // exchange
+						"inventory_analiser",           // exchange
 						"",       // routing key
 						false,        // mandatory
 						false,

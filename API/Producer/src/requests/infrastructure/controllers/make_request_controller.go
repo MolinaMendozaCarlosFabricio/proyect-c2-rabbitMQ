@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -36,6 +37,8 @@ func(controller *MakeRequestController)Execute(c *gin.Context){
 	}
 	var ids []int
 	ids = append(ids, id)
+
+	fmt.Println("Id del pedido:", ids[0])
 
 	c.JSON(http.StatusOK, gin.H{
 		"Message": "Pedido realizado",

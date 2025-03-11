@@ -128,7 +128,7 @@ func(r *RequestRepoMySQL)ReduceStockOfAProductMethod(acquire acquires_domain.Acq
 
 				status := 3
 
-				if 0 >= stock - acquire.Quantity {
+				if 0 <= stock - acquire.Quantity {
 					stock = stock - acquire.Quantity
 					status = 1
 					query := "UPDATE products SET stock = ? WHERE id = ?"
