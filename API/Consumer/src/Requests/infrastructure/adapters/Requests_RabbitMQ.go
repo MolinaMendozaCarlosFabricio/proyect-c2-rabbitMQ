@@ -7,7 +7,6 @@ import (
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"request_api.com/r/src/requests/domain"
 )
 
 type RequestRepoRabbitMQ struct {
@@ -31,11 +30,25 @@ func failOnError(err error, msg string) {
 	}
 }
 
-func(r *RequestRepoRabbitMQ)SendRequestToVerifyMethod(id_request int, id_product int, quiantity int)error{
-	acquire := &domain.Acquires{Id_request: id_request, Id_product: id_product, Quantity: quiantity}
+func(r *RequestRepoRabbitMQ)ConfirmValidationRequestMethod(id_request int, id_status int)error{
+	var request_info struct {
+		Id_request int
+		Status string
+	}
+
+	request_info.Id_request = id_request
+
+	if id_status == 1 {
+		request_info.Status = "Aceptado"
+	} else if id_status == 2 {
+		request_info.Status = "Cancelado"
+	} else if id_status == 3 {
+		request_info.Status = "Pendiente"
+	}
+	
 	err := r.ch.ExchangeDeclare(
-		"inventory_distributor2",   // name
-		"fanout", // type
+		"inventory_analiser2",   // name
+		"direct", // type
 		true,     // durable
 		false,    // auto-deleted
 		false,    // internal
@@ -48,12 +61,13 @@ func(r *RequestRepoRabbitMQ)SendRequestToVerifyMethod(id_request int, id_product
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
     defer cancel()
 
-	jsonBody, err := json.Marshal(acquire)
+
+	jsonBody, err := json.Marshal(request_info)
 	failOnError(err, "Error al serializar JSON")
 
 	err = r.ch.PublishWithContext(ctx,
-		"inventory_distributor",           // exchange
-		"queue_distributor",     // routing key
+		"inventory_analiser",           // exchange
+		"queue_analiser",     // routing key
 		false,        // mandatory
 		false,
 		amqp.Publishing{

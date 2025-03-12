@@ -3,11 +3,11 @@ package infrastructure
 import (
 	"fmt"
 	"log"
+
 	//"time"
 
 	"request_api.com/r/src/core"
 	"request_api.com/r/src/requests/domain"
-	"request_api.com/r/src/requests/infrastructure/adapters"
 )
 
 type RequestRepoMySQL struct {
@@ -45,7 +45,5 @@ func(r *RequestRepoMySQL)AddProductToRequestMethod(id_request int, id_product in
 	if err != nil {
         log.Fatalf("Error al enlazar prodcutos con pedidos:", err)
     }
-	acquire := &domain.Acquires{Id_request: id_request, Id_product: id_product, Quantity: quiantity}
-	adapters.SendRequestMethod(*acquire)
-    return err
+	return err
 }

@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
-	"context"
+	_"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
-	"time"
+	_"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -28,8 +28,8 @@ func main(){
     defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		"inventory_distributor",   // name
-		"fanout", // type
+		"inventory_distributor2",   // name
+		"direct", // type
 		true,     // durable
 		false,    // auto-deleted
 		false,    // internal
@@ -40,8 +40,8 @@ func main(){
 
 
 	q, err := ch.QueueDeclare(
-		"", // name
-		false,         // durable
+		"queue_of_distribution", // name
+		true,         // durable
 		false,        // delete when unused
 		true,        // exclusive
 		false,        // no-wait
@@ -51,7 +51,7 @@ func main(){
 
 	err = ch.QueueBind(
 		q.Name, // queue name
-		"",     // routing key
+		"queue_distributor",     // routing key
 		"inventory_distributor", // exchange
 		false,
 		nil,
@@ -68,21 +68,6 @@ func main(){
 		nil,    // args
 	)
 	failOnError(err, "Failed to register a consumer")
-
-	err = ch.ExchangeDeclare(
-		"inventory_analiser",   // name
-		"fanout", // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
-	)
-	failOnError(err, "Failed to declare an exchange")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-    defer cancel()
-
 
 	var forever chan struct{}
 
@@ -130,22 +115,6 @@ func main(){
 
 					log.Printf("Respuesta recibida: %+v", response)
                     d.Ack(false)
-
-					jsonBody, err := json.Marshal("Análisis completo")
-					failOnError(err, "Error al serializar JSON")
-
-					err = ch.PublishWithContext(ctx,
-						"inventory_analiser",           // exchange
-						"",       // routing key
-						false,        // mandatory
-						false,
-						amqp.Publishing{
-								DeliveryMode: amqp.Persistent,
-								ContentType:  "text/plain",
-								Body:         jsonBody,
-						})
-					failOnError(err, "Failed to publish a message")
-					log.Printf(" [x] Sent %s", jsonBody)
                 }
         }()
 

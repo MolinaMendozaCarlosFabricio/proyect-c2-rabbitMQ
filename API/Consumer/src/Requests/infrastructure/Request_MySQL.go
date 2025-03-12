@@ -98,7 +98,8 @@ func(r *RequestRepoMySQL)ReduceStockMethod(id int)error{
 	return err
 }
 
-func(r *RequestRepoMySQL)ReduceStockOfAProductMethod(acquire acquires_domain.Acquires)error{
+func(r *RequestRepoMySQL)ReduceStockOfAProductMethod(acquire acquires_domain.Acquires)(int, error){
+	int_status := 0
 
 	query := "SELECT id_status FROM requests WHERE id = ?"
 	rows, err := r.Connection.FetchRows(query, acquire.Id_request)
@@ -139,6 +140,8 @@ func(r *RequestRepoMySQL)ReduceStockOfAProductMethod(acquire acquires_domain.Acq
 				} else {
 					status = 2
 				}
+
+				id_status = status
 				query := "UPDATE requests SET id_status = ? WHERE id = ?"
 				_, err := r.Connection.ExecPreparedQuerys(query, status, acquire.Id_request)
 				if err != nil {
@@ -148,5 +151,27 @@ func(r *RequestRepoMySQL)ReduceStockOfAProductMethod(acquire acquires_domain.Acq
 		}
 	}
 	
-	return err
+	return int_status, err
+}
+
+func(r *RequestRepoMySQL)GetOneOfMyRequestsMethod(id_request int)([]domain.Request, error){
+	query := "SELECT requests.id, requests.date_request, status_request.name_status FROM requests INNER JOIN status_request ON requests.id_status = status_request.id WHERE requests.id = ?"
+	rows, err := r.Connection.FetchRows(query, id_request)
+	var requests []domain.Request
+	if err != nil {
+        log.Fatalf("Error al obtener pedidos:", err)
+    }
+    defer rows.Close()
+	for rows.Next(){
+		var id int
+		var request_date string
+		var status_request string
+		
+		if err := rows.Scan(&id, &request_date, &status_request); err != nil{
+			log.Println("Error al escanear la fila:", err)
+		}
+		request := domain.Request{ID: id, Date_request: request_date, Status: status_request}
+		requests = append(requests, request)
+	}
+	return requests, err
 }

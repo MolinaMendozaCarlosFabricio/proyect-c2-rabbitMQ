@@ -6,14 +6,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"request_api.com/r/src/requests/application"
+	"request_api.com/r/src/requests/application/services"
 )
 
 type AddProductController struct {
 	Service application.AddProductUC
+	another_service services.SendRequestToVerifyMethodService
 }
 
-func NewAddProductController(uc application.AddProductUC)*AddProductController{
-	return&AddProductController{Service: uc}
+func NewAddProductController(
+	uc application.AddProductUC, 
+	s services.SendRequestToVerifyMethodService,
+	)*AddProductController{
+	return&AddProductController{Service: uc, another_service: s}
 }
 
 func(controller *AddProductController)Execute(c *gin.Context){
@@ -36,6 +41,14 @@ func(controller *AddProductController)Execute(c *gin.Context){
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Error": "Error al añadir producto al pedido",
 		})
+		return
+	}
+
+	if err := controller.another_service.Execute(input.Id_request, input.Id_product, input.Quantity); err != nil{
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Error": "Error al enviar producto a revisión",
+		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{

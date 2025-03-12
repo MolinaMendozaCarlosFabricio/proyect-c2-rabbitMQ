@@ -6,14 +6,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"products_api.com/p/src/Requests/application"
+	"products_api.com/p/src/Requests/application/services"
 )
 
 type ReduceStockOfAProductController struct {
 	service application.ReduceStockOfAProductUC
+	another_service services.ConfirmValidationRequestService
 }
 
-func NewReduceStockOfAProductController(uc application.ReduceStockOfAProductUC)*ReduceStockOfAProductController{
-	return&ReduceStockOfAProductController{service: uc}
+func NewReduceStockOfAProductController(
+	uc application.ReduceStockOfAProductUC,
+	s services.ConfirmValidationRequestService,
+	)*ReduceStockOfAProductController{
+	return&ReduceStockOfAProductController{service: uc, another_service: s}
 }
 
 func(controller *ReduceStockOfAProductController)Execute(c *gin.Context){
@@ -32,9 +37,17 @@ func(controller *ReduceStockOfAProductController)Execute(c *gin.Context){
 
 	fmt.Println("Entrada: ", input)
 
-	if err := controller.service.Execute(input.Id_request, input.Id_product, input.Quantity); err != nil {
+	id_status, err := controller.service.Execute(input.Id_request, input.Id_product, input.Quantity);
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Error": "Error al registrar product",
+		})
+		return
+	}
+
+	if err := controller.another_service.Execute(input.Id_request, id_status); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Error": "Error al retornar resultado del pedido",
 		})
 		return
 	}
