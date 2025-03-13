@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { RequestWhitStatus } from '../../models/request-whit-status';
 import { GetRequestsService } from '../../services/get-requests.service';
+import { RequestsService } from '../../services/requests.service';
+import { RabbitmqMessage } from '../../models/rabbitmq-message';
 
 @Component({
   selector: 'app-main-page',
@@ -8,20 +10,30 @@ import { GetRequestsService } from '../../services/get-requests.service';
   styleUrl: './main-page.component.css'
 })
 export class MainPageComponent implements OnInit{
-  request_list: RequestWhitStatus[] = [];
-  isLoading: boolean = true;
+  messages: RabbitmqMessage[] = [];
+  list_requests: RequestWhitStatus[] = [];
 
-  constructor(private getRequestServices: GetRequestsService){}
+  constructor(
+    private getRequestService: GetRequestsService,
+    private requestService: RequestsService
+  ) {}
 
   ngOnInit(): void {
+    setInterval(() => this.polling(), 5000)
     /*
-    console.log("Conectando con websocket")
-    this.getRequestServices.get_requests(1, (requests) => {
-      this.request_list = requests.Results
-      console.log("Resultados:", requests.Results)
-    })
-    console.log("Resultados:", this.request_list)
-    this.getRequestServices.on_new_request((request) => this.request_list.push(request.Results[0]))
-    */
+    this.getRequestService.onMessage().subscribe((msg) => {
+      this.messages.push(msg);
+    });
+*/
+  }
+
+  polling(){
+    this.requestService.getRequestsMine(1).subscribe(
+      response => {
+        console.log("Respuesta recibida:", response)
+        this.list_requests = response.Results;
+      },
+      error => console.log("Error:", error)
+    )
   }
 }

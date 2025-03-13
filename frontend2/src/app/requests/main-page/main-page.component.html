@@ -1,5 +1,11 @@
 <main>
     <p>requests-page works!</p>
     <app-add-form></app-add-form>
-    <app-item [request]="request" *ngFor="let request of request_list"></app-item>
+    <h2>Confirmación de pedidos</h2>
+    <ul>
+      <li *ngFor="let msg of messages">{{ msg }}</li>
+    </ul>
+    <div *ngFor="let request of list_requests">
+        <h3> {{request.ID}}. {{request.Status}} </h3>
+    </div>
 </main>

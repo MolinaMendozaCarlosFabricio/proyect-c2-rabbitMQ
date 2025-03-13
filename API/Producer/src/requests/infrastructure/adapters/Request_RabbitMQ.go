@@ -11,18 +11,10 @@ import (
 )
 
 type RequestRepoRabbitMQ struct {
-	ch *amqp.Channel
 }
 
 func NewRequestRepoRabbitMQ()*RequestRepoRabbitMQ{
-	conn, err := amqp.Dial("amqp://charly:666demon@13.217.73.3:5672/")
-    failOnError(err, "Failed to connect to RabbitMQ")
-    defer conn.Close()
-
-    ch, err := conn.Channel()
-    failOnError(err, "Failed to open a channel")
-    defer ch.Close()
-	return&RequestRepoRabbitMQ{ch: ch}
+	return&RequestRepoRabbitMQ{}
 }
 
 func failOnError(err error, msg string) {
@@ -33,9 +25,18 @@ func failOnError(err error, msg string) {
 
 func(r *RequestRepoRabbitMQ)SendRequestToVerifyMethod(id_request int, id_product int, quiantity int)error{
 	acquire := &domain.Acquires{Id_request: id_request, Id_product: id_product, Quantity: quiantity}
-	err := r.ch.ExchangeDeclare(
+
+	conn, err := amqp.Dial("amqp://charly:666demon@13.217.73.3:5672/")
+    failOnError(err, "Failed to connect to RabbitMQ")
+    defer conn.Close()
+
+    ch, err := conn.Channel()
+    failOnError(err, "Failed to open a channel")
+    defer ch.Close()
+
+	err = ch.ExchangeDeclare(
 		"inventory_distributor2",   // name
-		"fanout", // type
+		"direct", // type
 		true,     // durable
 		false,    // auto-deleted
 		false,    // internal
@@ -51,7 +52,7 @@ func(r *RequestRepoRabbitMQ)SendRequestToVerifyMethod(id_request int, id_product
 	jsonBody, err := json.Marshal(acquire)
 	failOnError(err, "Error al serializar JSON")
 
-	err = r.ch.PublishWithContext(ctx,
+	err = ch.PublishWithContext(ctx,
 		"inventory_distributor",           // exchange
 		"queue_distributor",     // routing key
 		false,        // mandatory

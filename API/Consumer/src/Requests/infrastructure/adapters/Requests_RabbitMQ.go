@@ -10,18 +10,10 @@ import (
 )
 
 type RequestRepoRabbitMQ struct {
-	ch *amqp.Channel
 }
 
 func NewRequestRepoRabbitMQ()*RequestRepoRabbitMQ{
-	conn, err := amqp.Dial("amqp://charly:666demon@13.217.73.3:5672/")
-    failOnError(err, "Failed to connect to RabbitMQ")
-    defer conn.Close()
-
-    ch, err := conn.Channel()
-    failOnError(err, "Failed to open a channel")
-    defer ch.Close()
-	return&RequestRepoRabbitMQ{ch: ch}
+	return&RequestRepoRabbitMQ{}
 }
 
 func failOnError(err error, msg string) {
@@ -31,6 +23,14 @@ func failOnError(err error, msg string) {
 }
 
 func(r *RequestRepoRabbitMQ)ConfirmValidationRequestMethod(id_request int, id_status int)error{
+	conn, err := amqp.Dial("amqp://charly:666demon@13.217.73.3:5672/")
+    failOnError(err, "Failed to connect to RabbitMQ")
+    defer conn.Close()
+
+    ch, err := conn.Channel()
+    failOnError(err, "Failed to open a channel")
+    defer ch.Close()
+
 	var request_info struct {
 		Id_request int
 		Status string
@@ -46,7 +46,7 @@ func(r *RequestRepoRabbitMQ)ConfirmValidationRequestMethod(id_request int, id_st
 		request_info.Status = "Pendiente"
 	}
 	
-	err := r.ch.ExchangeDeclare(
+	err = ch.ExchangeDeclare(
 		"inventory_analiser2",   // name
 		"direct", // type
 		true,     // durable
@@ -65,7 +65,7 @@ func(r *RequestRepoRabbitMQ)ConfirmValidationRequestMethod(id_request int, id_st
 	jsonBody, err := json.Marshal(request_info)
 	failOnError(err, "Error al serializar JSON")
 
-	err = r.ch.PublishWithContext(ctx,
+	err = ch.PublishWithContext(ctx,
 		"inventory_analiser",           // exchange
 		"queue_analiser",     // routing key
 		false,        // mandatory

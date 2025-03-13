@@ -23,4 +23,8 @@ export class RequestsService {
   addProductToRequest(acquire: Acquire): Observable<Message>{
     return this._http.post<Message>(this._url_api1 + "product", acquire)
   }
+  
+  getRequestsMine(id_user: number): Observable<MessageWhitResults<RequestWhitStatus>>{
+    return this._http.get<MessageWhitResults<RequestWhitStatus>>(this._url_api2 + id_user)
+  }
 }

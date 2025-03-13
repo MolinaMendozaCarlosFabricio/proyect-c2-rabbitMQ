@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { MessageWhitResults } from '../models/message-whit-results';
 import { RequestWhitStatus } from '../models/request-whit-status';
+import { Observable } from 'rxjs';
+import { RabbitmqMessage } from '../models/rabbitmq-message';
 
 @Injectable({
   providedIn: 'root'
@@ -12,25 +14,18 @@ export class GetRequestsService {
 
   constructor() {
     this.socket = io(this._url, {
-      transports: ['websocket'], // Fuerza el uso de WebSockets
-      withCredentials: true
-    });
-
-    this.socket.on('connect', () => {
-      console.log('Conectado a WebSocket');
+      path: "/socket.io/",
+      withCredentials: true,
     });
   }
 
-  get_requests(id_user: number, callback: (response: MessageWhitResults<RequestWhitStatus>) => void){
-    this.socket.emit('get_requests', id_user);
-    this.socket.on('requests_list', callback)
-  }
+  onMessage(): Observable<RabbitmqMessage> {
+    return new Observable((observer) => {
+      this.socket.on('rabbitmq_message', (msg: RabbitmqMessage) => {
+        observer.next(msg);
+      });
 
-  send_request(id_request: number){
-    this.socket.emit("add_request", id_request)
-  }
-
-  on_new_request(callback: (response: MessageWhitResults<RequestWhitStatus>) => void){
-    this.socket.on("one_request", callback)
+      return () => this.socket.disconnect();
+    });
   }
 }
