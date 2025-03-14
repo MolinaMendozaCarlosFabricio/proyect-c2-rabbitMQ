@@ -1,21 +1,21 @@
 package main
 
 import (
-	"bytes"
-	_"context"
 	"encoding/json"
 	"log"
-	"net/http"
-	"strconv"
-	_"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Acquires struct{
+type Response_info struct{
 	Id_request int
-	Id_product int
-	Quantity int
+	Status string
+}
+
+func failOnError(err error, msg string) {
+	if err != nil {
+		log.Panicf("%s: %s", msg, err)
+	}
 }
 
 func main(){
@@ -28,7 +28,7 @@ func main(){
     defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		"inventory_distributor2",   // name
+		"inventory_analiser2",   // name
 		"direct", // type
 		true,     // durable
 		false,    // auto-deleted
@@ -40,7 +40,7 @@ func main(){
 
 
 	q, err := ch.QueueDeclare(
-		"queue_of_distribution", // name
+		"queue_of_analisys", // name
 		true,         // durable
 		false,        // delete when unused
 		true,        // exclusive
@@ -51,8 +51,8 @@ func main(){
 
 	err = ch.QueueBind(
 		q.Name, // queue name
-		"queue_distributor",     // routing key
-		"inventory_distributor2", // exchange
+		"queue_analiser",     // routing key
+		"inventory_analiser2", // exchange
 		false,
 		nil,
 	)
@@ -74,7 +74,7 @@ func main(){
         go func() {
                 for d := range msgs {
 					log.Printf("Mensaje recibido: %s", d.Body)
-					var acq Acquires
+					var acq Response_info
 					if err := json.Unmarshal(d.Body, &acq); err != nil {
 						log.Printf("Error al deserializar el mensaje: %v", err)
 						d.Nack(false, false)
@@ -82,48 +82,10 @@ func main(){
 					}
 
 					log.Printf("Pedido recibido: %+v", acq)
-
-					data := []byte(`{
-						"Id_request": ` + strconv.Itoa(acq.Id_request) + "," + `
-						"Id_product": ` + strconv.Itoa(acq.Id_product) + "," + `
-						"Quantity": ` + strconv.Itoa(acq.Quantity) + 
-					`}`,)
-
-					request, err := http.NewRequest(
-						"PUT",
-						"http://localhost:9080/requests/product",
-						bytes.NewBuffer(data),
-					)
-
-					if err != nil {
-						log.Printf("Error al preparar la solicitud HTTP: %v", err)
-						d.Nack(false, false)
-						continue
-					}
-
-					request.Header.Set("Content-Type", "application/json")
-
-					client := http.Client{}
-
-					response, err := client.Do(request)
-		
-					if err != nil {
-						log.Printf("Error al hacer la solicitud HTTP: %v", err)
-						d.Nack(false, false)
-						continue
-					}
-
-					log.Printf("Respuesta recibida: %+v", response)
                     d.Ack(false)
                 }
         }()
 
 		log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 		<-forever
-}
-
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Panicf("%s: %s", msg, err)
-	}
 }

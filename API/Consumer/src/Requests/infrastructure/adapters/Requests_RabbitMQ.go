@@ -66,7 +66,7 @@ func(r *RequestRepoRabbitMQ)ConfirmValidationRequestMethod(id_request int, id_st
 	failOnError(err, "Error al serializar JSON")
 
 	err = ch.PublishWithContext(ctx,
-		"inventory_analiser",           // exchange
+		"inventory_analiser2",           // exchange
 		"queue_analiser",     // routing key
 		false,        // mandatory
 		false,
