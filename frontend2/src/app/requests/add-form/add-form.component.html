@@ -1,14 +1,17 @@
-<div>
+<div class="order-form">
     <p>requests-add-form works!</p>
     <h3>Realizar solicitud</h3>
-    <div>
-        <div *ngFor="let product of product_list">
-            <p> {{product.ID}}. {{product.Name_product}} </p>
-            <p> {{product.Category}} </p>
-            <p> {{product.Price}} </p>
-            <p> {{product.Stock}} </p>
-            <button (click)="addProduct(product.ID)" >Agregar producto</button>
+    <div class="product-list">
+        <div *ngFor="let product of product_list" class="product-card">
+            <div class="product-info">
+                <p> {{product.ID}}. {{product.Name_product}} </p>
+                <p> {{product.Category}} </p>
+                <p> {{product.Price}} </p>
+                <p> {{product.Stock}} </p>
+            </div>
+            
+            <button (click)="addProduct(product.ID)" class="add-btn">Agregar producto</button>
         </div>
     </div>
-    <button (click)="create()" >Realizar pedido</button>
+    <button (click)="create()" class="submit-btn">Realizar pedido</button>
 </div>
